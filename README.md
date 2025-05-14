@@ -1,0 +1,2 @@
+# Two way Integration
+This project demonstrates a two-way integration between customer catalogues of two different systems. The integration is done using a message broker (RabbitMQ) and a database (PostgreSQL). The project is implemented in Python.
