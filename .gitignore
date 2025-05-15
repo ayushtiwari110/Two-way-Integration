@@ -1,1 +1,4 @@
 /venv
+config.py
+customer_sync.db
+/database/__pycache__

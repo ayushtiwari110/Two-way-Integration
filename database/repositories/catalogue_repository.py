@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from models import CatalogItem, Customer, Invoice, CatalogIntegration
 
 # Generic repository pattern for different Catalog types (Customer, Invoice, etc.)
 class CatalogRepository:
@@ -14,12 +13,15 @@ class CatalogRepository:
         item = self.item_class(**kwargs)
         self.session.add(item)
         self.session.commit()
+        print(f"Created {self.item_class.__name__} with properties: {kwargs}")
+        
         return item
     
     def update(self, item_id, **kwargs):
         """Update a catalog item"""
         item = self.session.query(self.item_class).filter(self.item_class.id == item_id).first()
         if not item:
+            print(f"{self.item_class.__name__} with ID {item_id} not found.")
             return None
         
         for key, value in kwargs.items():
@@ -33,6 +35,7 @@ class CatalogRepository:
         """Delete a catalog item"""
         item = self.session.query(self.item_class).filter(self.item_class.id == item_id).first()
         if not item:
+            print(f"{self.item_class.__name__} with ID {item_id} not found.")
             return False
         
         self.session.delete(item)

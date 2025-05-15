@@ -35,7 +35,7 @@ class Customer(CatalogItem):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
     
-    integrations = relationship("CatalogIntegration", back_populates="catalog_item")
+    # integrations = relationship("CatalogIntegration", back_populates="catalog_item") # if more than one external services
     
     __mapper_args__ = {
         'polymorphic_identity': 'customer',
