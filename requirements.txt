@@ -1,0 +1,9 @@
+sqlalchemy
+stripe
+kafka-python
+fastapi
+uvicorn
+python-dotenv
+requests
+pydantic
+pyngrok
