@@ -13,6 +13,10 @@ import signal
 import sys
 from contextlib import asynccontextmanager
 
+# Workers
+stripe_worker = StripeWorker()
+inward_sync_worker = InwardSyncWorker()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
@@ -25,15 +29,11 @@ async def lifespan(app: FastAPI):
     stripe_worker.stop()
     inward_sync_worker.stop()
 
-app = FastAPI(title="Customer Sync Integration")
+app = FastAPI(title="Customer Sync Integration", lifespan=lifespan)
 
 # Include routers
 app.include_router(customer_router, prefix="/api")
 app.mount("/webhooks", webhook_app)
-
-# Workers
-stripe_worker = StripeWorker()
-inward_sync_worker = InwardSyncWorker()
 
 # Services for polling (if not using webhooks)
 stripe_service = StripeService()

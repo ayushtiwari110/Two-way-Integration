@@ -10,9 +10,11 @@ class CatalogItem(Base):
     __tablename__ = 'catalog_items'
     
     id = Column(Integer, primary_key=True)
-    catalog_type = Column(String, nullable=False)  # 'customer', 'invoice', etc.
+    catalog_type = Column(String, nullable=False, default='customer')  # 'customer', 'invoice', etc.
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
     updated_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc), onupdate=datetime.datetime.now(datetime.timezone.utc))
+    
+    integrations = relationship("CatalogIntegration", back_populates="catalog_item")
     
     __mapper_args__ = {
         'polymorphic_identity': 'catalog_item',
@@ -35,10 +37,32 @@ class Customer(CatalogItem):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
     
-    # integrations = relationship("CatalogIntegration", back_populates="catalog_item") # if more than one external services
-    
     __mapper_args__ = {
         'polymorphic_identity': 'customer',
+    }
+
+# This class is used to manage integrations with multiple external services
+class CatalogIntegration(Base):
+    __tablename__ = 'catalog_integrations'
+    
+    id = Column(Integer, primary_key=True)
+    catalog_item_id = Column(Integer, ForeignKey('catalog_items.id'))
+    integration_type = Column(String, nullable=False, default='stripe')  # e.g., 'stripe', 'salesforce'
+    integration_id = Column(String, nullable=False)  # Unique ID from the external service
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+    
+    catalog_item = relationship("CatalogItem", back_populates="integrations")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "catalog_item_id": self.catalog_item_id,
+            "integration_type": self.integration_type,
+            "integration_id": self.integration_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+    __mapper_args__ = {
+        'polymorphic_identity': 'catalog_integration',
     }
 
 # Database setup
@@ -78,26 +102,3 @@ Session = sessionmaker(bind=engine)
 #         'polymorphic_identity': 'invoice',
 #     }
 #
-# # This class can be used to manage integrations with multiple external systems
-# class CatalogIntegration(Base):
-#     __tablename__ = 'catalog_integrations'
-    
-#     id = Column(Integer, primary_key=True)
-#     catalog_item_id = Column(Integer, ForeignKey('catalog_items.id'))
-#     integration_type = Column(String, nullable=False)  # e.g., 'salesforce', 'hubspot'
-#     integration_id = Column(String, nullable=False)  # Unique ID from the integration system
-#     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
-    
-#     catalog_item = relationship("CatalogItem", back_populates="integrations")
-    
-#     def to_dict(self):
-#         return {
-#             "id": self.id,
-#             "catalog_item_id": self.catalog_item_id,
-#             "integration_type": self.integration_type,
-#             "integration_id": self.integration_id,
-#             "created_at": self.created_at.isoformat() if self.created_at else None
-#         }
-#     __mapper_args__ = {
-#         'polymorphic_identity': 'catalog_integration',
-#     }

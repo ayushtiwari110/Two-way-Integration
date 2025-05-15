@@ -1,6 +1,6 @@
 # services/stripe_service.py
 import stripe
-from integration_service import CatalogIntegrationService
+from services.integration_service import CatalogIntegrationService
 from config import STRIPE_API_KEY
 
 # Stripe Integration Service

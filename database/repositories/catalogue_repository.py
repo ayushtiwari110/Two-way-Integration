@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from database.models import CatalogIntegration
 
 # Generic repository pattern for different Catalog types (Customer, Invoice, etc.)
 class CatalogRepository:
@@ -49,3 +50,21 @@ class CatalogRepository:
     def get_all(self):
         """Get all catalog items"""
         return self.session.query(self.item_class).all()
+    
+    def add_integration(self, item_id, integration_type, integration_id):
+        """Add integration information for a catalog item"""
+        integration = CatalogIntegration(
+            catalog_item_id=item_id,
+            integration_type=integration_type,
+            integration_id=integration_id,
+        )
+        self.session.add(integration)
+        self.session.commit()
+        return integration
+    
+    def get_integration(self, integration_id, integration_type):
+        """Get a catalog item by its external integration ID"""
+        return self.session.query(CatalogIntegration).filter(
+            CatalogIntegration.integration_id == integration_id,
+            CatalogIntegration.integration_type == integration_type
+        ).first()
