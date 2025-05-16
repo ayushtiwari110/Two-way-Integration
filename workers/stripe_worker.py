@@ -57,7 +57,15 @@ class StripeWorker:
             stripe_customer_id = self.stripe_service.create_item(name=name, email=email)
             
             if stripe_customer_id:
-                print(f"Created Stripe customer for {name} ({email})")
+                if self.customer_repo.get_integration(catalog_id=customer_id, integration_type='stripe'):
+                    print(f"Stripe customer already exists for {name} ({email})")
+                else:
+                    self.customer_repo.add_integration(
+                        item_id=customer_id,
+                        integration_type='stripe',
+                        integration_id=stripe_customer_id
+                    )
+                    print(f"Created and linked Stripe customer {stripe_customer_id} for {name} ({email})")
         except Exception as e:
             print(f"Error handling customer created event: {e}")
     
@@ -81,11 +89,18 @@ class StripeWorker:
         """Handle customer deleted event"""
         try:
             customer_id = event.get('customer_id')
-            
             integration = self.customer_repo.get_integration(catalog_id=customer_id, integration_type='stripe')
-            if integration:
-                stripe_customer_id = integration.integration_id
-                self.stripe_service.delete_item(stripe_customer_id)
-                print(f"Deleted Stripe customer for customer_id {customer_id}")
+            
+            print(f"Processing Stripe customer deletion for Stripe ID: {integration.integration_id}")
+
+            delete_from_stripe = self.stripe_service.delete_item(integration.integration_id)
+            if delete_from_stripe:
+                print(f"Successfully deleted Stripe customer: {integration.integration_id}")
+                # Delete the integration record using its own ID
+                self.customer_repo.delete_integration(integration.integration_id)
+                print(f"Successfully deleted local integration record (ID: {integration.id}) for Stripe ID: {integration.integration_id}")
+            else:
+                print(f"Failed to delete Stripe customer: {integration.integration_id}")
+                
         except Exception as e:
             print(f"Error handling customer deleted event: {e}")

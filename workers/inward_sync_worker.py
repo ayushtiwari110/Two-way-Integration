@@ -65,9 +65,23 @@ class InwardSyncWorker:
             if existing_customer:
                 # Customer exists, update it
                 customer = self.customer_repo.get(existing_customer.id)
-                if customer:
+                if customer.name != name or customer.email != email:
+                    # Update customer details
                     customer = self.customer_repo.update(customer.id, name=name, email=email)
                     print(f"Updated customer {customer.id} from Stripe")
+                
+                # Add integration if not already present
+                integration = self.customer_repo.get_integration(
+                    catalog_id=customer.id,
+                    integration_type='stripe'
+                )
+                if not integration:
+                    self.customer_repo.add_integration(
+                        item_id=customer.id,
+                        integration_type='stripe',
+                        integration_id=stripe_id
+                    )
+                    print(f"Linked existing customer {customer.id} to Stripe customer {stripe_id}")
             else:
                 # Customer doesn't exist, check by email
                 customer = self.customer_repo.get_by_email(email)

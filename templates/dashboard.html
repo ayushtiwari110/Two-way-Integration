@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Integration Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .card {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: 0.3s;
+      }
+      .card:hover {
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      }
+      .stats-card {
+        text-align: center;
+        padding: 20px;
+      }
+      .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="/">Customer Sync Hub</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/customers">Customers</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/integrations">Integrations</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <div class="row mb-4">
+        <div class="col">
+          <h1>Customer Sync Dashboard</h1>
+          <p class="lead text-muted">Monitor your customer integration status across systems</p>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card stats-card mb-4">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Total Customers</h5>
+              <div class="stats-number" id="totalCustomers">--</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stats-card mb-4">
+            <div class="card-body">
+              <h5 class="card-title text-success">Synced Customers</h5>
+              <div class="stats-number" id="syncedCustomers">--</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stats-card mb-4">
+            <div class="card-body">
+              <h5 class="card-title text-warning">Pending Sync</h5>
+              <div class="stats-number" id="pendingCustomers">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">Customer Sync Status</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="syncChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">Recent Customers</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group" id="recentSyncs">
+                <!-- Populated by JavaScript -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12 d-flex justify-content-center">
+          <a href="/customers" class="btn btn-primary me-2">Manage Customers</a>
+          <a href="/integrations" class="btn btn-success me-2">View Integrations</a>
+          <button id="refreshDashboard" class="btn btn-info">Refresh Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/dashboard.js?v={{ timestamp }}"></script>
+  </body>
+</html>

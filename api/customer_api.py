@@ -35,6 +35,14 @@ class CustomerResponse(BaseModel):
     id: int
     name: str
     email: str
+    
+class IntegrationResponse(BaseModel):
+    id: int
+    catalog_item_id: Optional[int] = None 
+    integration_type: str
+    integration_id: str
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
 
 @router.post("/customers", response_model=CustomerResponse)
 def create_customer(
@@ -84,9 +92,12 @@ def delete_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
+    integration = repo.get_integration(catalog_id=customer_id, integration_type='stripe')
     deleted = repo.delete(customer_id)
-    if deleted:
+    print(f"Deleted: {deleted}, Integration: {integration}")
+    if deleted and integration:
         sync_service.queue_delete_event(customer_id)
+        print(f"Queued deletion of Stripe customer: {customer_id}")
     
     return {"success": deleted}
 
@@ -114,3 +125,31 @@ def get_customer(customer_id: int, repo: CustomerRepository = Depends(get_custom
         email=customer.email
     )
     
+@router.get("/customers/{customer_id}/integration-status")
+def get_customer_integration_status(customer_id: int, repo: CustomerRepository = Depends(get_customer_repo)):
+    customer = repo.get(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    integration = repo.get_integration(catalog_id=customer_id, integration_type='stripe')
+    return {"has_integration": integration is not None}
+
+@router.get("/integrations", response_model=List[IntegrationResponse])
+def get_all_integrations(repo: CustomerRepository = Depends(get_customer_repo)):
+    """Get all integration records with customer information"""
+    integrations = repo.get_all_integrations()
+    result = []
+    
+    for integration in integrations:
+        customer = repo.get(integration.catalog_item_id)
+        response = IntegrationResponse(
+            id=integration.id,
+            catalog_item_id=integration.catalog_item_id,
+            integration_type=integration.integration_type,
+            integration_id=integration.integration_id,
+            customer_name=customer.name if customer else None,
+            customer_email=customer.email if customer else None
+        )
+        result.append(response)
+    
+    return result
