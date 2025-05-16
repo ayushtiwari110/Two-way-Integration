@@ -1,5 +1,5 @@
 /venv
 config.py
 customer_sync.db
-
+/helper
 **/__pycache__/

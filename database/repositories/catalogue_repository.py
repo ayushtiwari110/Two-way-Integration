@@ -74,14 +74,20 @@ class CatalogRepository:
             CatalogIntegration.integration_id == integration_id,
             CatalogIntegration.integration_type == integration_type
         ).first()
+        
+    def get_all_integrations(self, integration_type='stripe'):
+        """Get all integrations for a specific type"""
+        return self.session.query(CatalogIntegration).filter(
+            CatalogIntegration.integration_type == integration_type
+        ).all()
     
-    def delete_integration(self, integration_id):
+    def delete_integration(self, integration_record_id):
         """Delete a catalog item integration"""
         integration = self.session.query(CatalogIntegration).filter(
-            CatalogIntegration.id == integration_id
+            CatalogIntegration.id == integration_record_id
         ).first()
         if not integration:
-            print(f"Integration with ID {integration_id} not found.")
+            print(f"Integration with ID {integration_record_id} not found.")
             return False
         
         self.session.delete(integration)

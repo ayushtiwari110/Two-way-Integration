@@ -1,6 +1,10 @@
 # main.py
 from fastapi import FastAPI
-from api.customer_api import router as customer_router
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi import Request, Depends
+from api.customer_api import router as customer_router, get_customers, get_customer_integration_status
 from api.app import app as webhook_app
 from workers.stripe_worker import StripeWorker
 from workers.inward_sync_worker import InwardSyncWorker
@@ -8,10 +12,28 @@ from workers.inward_sync_worker import InwardSyncWorker
 from services.stripe_service import StripeService
 from services.kafka_service import KafkaService
 import uvicorn
-import threading
 import signal
+import logging
 import sys
 from contextlib import asynccontextmanager
+
+def setup_logging():
+    # Configure root logger
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout)  # Send logs to stdout
+        ]
+    )
+    # Set Uvicorn access log level to INFO
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    
+    # Return root logger
+    return logging.getLogger(__name__)
+
+# Call setup_logging at the beginning of the file
+logger = setup_logging()
 
 # Workers
 stripe_worker = StripeWorker()
@@ -31,6 +53,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Customer Sync Integration", lifespan=lifespan)
 
+# UI templates
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Include routers
 app.include_router(customer_router, prefix="/api")
 app.mount("/webhooks", webhook_app)
@@ -49,5 +75,22 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+# UI Routes
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    import time
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request, 
+        "timestamp": int(time.time())  # Add timestamp for cache busting
+    })
+
+@app.get("/customers", response_class=HTMLResponse)
+async def customers_page(request: Request):
+    return templates.TemplateResponse("customers.html", {"request": request})
+
+@app.get("/integrations", response_class=HTMLResponse)
+async def integrations_page(request: Request):
+    return templates.TemplateResponse("integrations.html", {"request": request})
+    
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
