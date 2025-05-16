@@ -46,7 +46,7 @@ def create_customer(
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    new_customer = repo.create(customer.name, customer.email)
+    new_customer = repo.create(name=customer.name, email=customer.email)
     sync_service.queue_create_event(new_customer)
     
     return CustomerResponse(
@@ -62,7 +62,7 @@ def update_customer(
     repo: CustomerRepository = Depends(get_customer_repo),
     sync_service: OutwardSyncService = Depends(get_outward_sync_service)
 ):
-    updated = repo.update(customer_id, customer.name, customer.email)
+    updated = repo.update(customer_id, name=customer.name, email=customer.email)
     if not updated:
         raise HTTPException(status_code=404, detail="Customer not found")
     
@@ -113,3 +113,4 @@ def get_customer(customer_id: int, repo: CustomerRepository = Depends(get_custom
         name=customer.name,
         email=customer.email
     )
+    

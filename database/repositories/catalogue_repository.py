@@ -9,25 +9,26 @@ class CatalogRepository:
         self.session = session
         self.item_class = item_class
     
-    def create(self, **kwargs):
+    def create(self, name, email):
         """Create a new catalog item"""
-        item = self.item_class(**kwargs)
+        item = self.item_class(name=name, email=email)
         self.session.add(item)
         self.session.commit()
-        print(f"Created {self.item_class.__name__} with properties: {kwargs}")
+        print(f"Created {self.item_class.__name__} with name: {name}, email: {email}")
         
         return item
     
-    def update(self, item_id, **kwargs):
+    def update(self, item_id, name=None, email=None):
         """Update a catalog item"""
         item = self.session.query(self.item_class).filter(self.item_class.id == item_id).first()
         if not item:
             print(f"{self.item_class.__name__} with ID {item_id} not found.")
             return None
         
-        for key, value in kwargs.items():
-            if hasattr(item, key) and value is not None:
-                setattr(item, key, value)
+        if name is not None:
+            item.name = name
+        if email is not None:
+            item.email = email
                 
         self.session.commit()
         return item
@@ -62,9 +63,27 @@ class CatalogRepository:
         self.session.commit()
         return integration
     
-    def get_integration(self, integration_id, integration_type):
+    def get_integration(self, integration_id=None, catalog_id=None, integration_type='stripe'):
         """Get a catalog item by its external integration ID"""
+        if catalog_id:
+            return self.session.query(CatalogIntegration).filter(
+                CatalogIntegration.catalog_item_id == catalog_id,
+                CatalogIntegration.integration_type == integration_type
+            ).first()
         return self.session.query(CatalogIntegration).filter(
             CatalogIntegration.integration_id == integration_id,
             CatalogIntegration.integration_type == integration_type
         ).first()
+    
+    def delete_integration(self, integration_id):
+        """Delete a catalog item integration"""
+        integration = self.session.query(CatalogIntegration).filter(
+            CatalogIntegration.id == integration_id
+        ).first()
+        if not integration:
+            print(f"Integration with ID {integration_id} not found.")
+            return False
+        
+        self.session.delete(integration)
+        self.session.commit()
+        return True

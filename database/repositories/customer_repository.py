@@ -14,7 +14,7 @@ class CustomerRepository(CatalogRepository):
 
     def get_customer_by_integration(self, integration_id, integration_type):
         """Get a customer through their external integration ID"""
-        integration = self.get_integration(integration_id, integration_type)
+        integration = self.get_integration(integration_id=integration_id, integration_type=integration_type)
         if integration:
-            return self.get_by_id(integration.catalog_item_id)
+            return self.get(integration.catalog_item_id)
         return None

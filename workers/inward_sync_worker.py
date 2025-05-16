@@ -34,9 +34,13 @@ class InwardSyncWorker:
                 
                 event = message.value
                 event_type = event.get('event_type')
-                
-                if event_type == 'stripe_customer_updated':
+                # Stripe's customer updated and created events
+                if event_type == 'customer.updated' or event_type == 'customer.created':
                     self._handle_stripe_customer_updated(event)
+                elif event_type == 'customer.deleted':
+                    self._handle_stripe_customer_deleted(event)
+                else:
+                    print(f"Unknown event type in inward_sync_worker: {event_type}")
         except Exception as e:
             print(f"Error processing messages: {e}")
     
@@ -60,9 +64,9 @@ class InwardSyncWorker:
             
             if existing_customer:
                 # Customer exists, update it
-                customer = self.customer_repo.get(existing_customer.customer_id)
+                customer = self.customer_repo.get(existing_customer.id)
                 if customer:
-                    customer = self.customer_repo.update(customer.id, name, email)
+                    customer = self.customer_repo.update(customer.id, name=name, email=email)
                     print(f"Updated customer {customer.id} from Stripe")
             else:
                 # Customer doesn't exist, check by email
@@ -70,21 +74,46 @@ class InwardSyncWorker:
                 
                 if customer:
                     # Update customer and add integration
-                    customer = self.customer_repo.update(customer.id, name, email)
+                    customer = self.customer_repo.update(customer.id, name=name, email=email)
                     self.customer_repo.add_integration(
-                        customer_id=customer.id,
+                        item_id=customer.id,
                         integration_type='stripe',
-                        external_id=stripe_id
+                        integration_id=stripe_id
                     )
                     print(f"Linked existing customer {customer.id} to Stripe customer {stripe_id}")
                 else:
                     # Create new customer and add integration
-                    customer = self.customer_repo.create(name, email)
+                    customer = self.customer_repo.create(name=name, email=email)
                     self.customer_repo.add_integration(
-                        customer_id=customer.id,
+                        item_id=customer.id,
                         integration_type='stripe',
-                        external_id=stripe_id
+                        integration_id=stripe_id
                     )
                     print(f"Created new customer {customer.id} from Stripe customer {stripe_id}")
         except Exception as e:
             print(f"Error handling Stripe customer update: {e}")
+    
+    def _handle_stripe_customer_deleted(self, event):
+        """Handle Stripe customer deleted event"""
+        try:
+            stripe_customer = event.get('stripe_customer', {})
+            stripe_id = stripe_customer.get('id')
+            
+            if not stripe_id:
+                print("Missing Stripe ID for deleted customer")
+                return
+            
+            # Find the customer in our system
+            integration = self.customer_repo.get_integration(integration_id=stripe_id, integration_type='stripe')
+            
+            if integration:
+                # Remove the customer's integration to stripe
+                self.customer_repo.delete_integration(integration.id)
+                print(f"Deleted integration for customer {integration.catalog_item_id} from Stripe")
+                # Optionally, delete the customer from our system
+                # self.customer_repo.delete(integration.catalog_item_id)
+                # print(f"Deleted customer {integration.catalog_item_id} from our system")
+            else:
+                print(f"No matching customer found for Stripe ID {stripe_id}")
+        except Exception as e:
+            print(f"Error handling Stripe customer deletion: {e}")

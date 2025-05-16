@@ -54,7 +54,7 @@ class StripeWorker:
             name = customer_data.get('name')
             email = customer_data.get('email')
             
-            stripe_customer_id = self.stripe_service.create_item(name, email)
+            stripe_customer_id = self.stripe_service.create_item(name=name, email=email)
             
             if stripe_customer_id:
                 print(f"Created Stripe customer for {name} ({email})")
@@ -65,33 +65,27 @@ class StripeWorker:
         """Handle customer updated event"""
         try:
             customer_data = event.get('customer', {})
+            customer_id = customer_data.get('id')
             name = customer_data.get('name')
             email = customer_data.get('email')
             
-            # Search for the Stripe customer by email
-            stripe_customers = self.stripe_service.get_items(email=email)
-            if stripe_customers:
-                stripe_customer_id = stripe_customers[0].id
+            integration = self.customer_repo.get_integration(catalog_id=customer_id, integration_type='stripe')
+            if integration:
+                stripe_customer_id = integration.integration_id
                 self.stripe_service.update_item(stripe_customer_id, name, email)
                 print(f"Updated Stripe customer for {name} ({email})")
-            else:
-                print(f"No Stripe customer found for email: {email}")
         except Exception as e:
             print(f"Error handling customer updated event: {e}")
     
     def _handle_customer_deleted(self, event):
         """Handle customer deleted event"""
         try:
-            customer_data = event.get('customer', {})
-            email = customer_data.get('email')
+            customer_id = event.get('customer_id')
             
-            # Search for the Stripe customer by email
-            stripe_customers = self.stripe_service.get_items(email=email)
-            if stripe_customers:
-                stripe_customer_id = stripe_customers[0].id
+            integration = self.customer_repo.get_integration(catalog_id=customer_id, integration_type='stripe')
+            if integration:
+                stripe_customer_id = integration.integration_id
                 self.stripe_service.delete_item(stripe_customer_id)
-                print(f"Deleted Stripe customer for {email}")
-            else:
-                print(f"No Stripe customer found for email: {email}")
+                print(f"Deleted Stripe customer for customer_id {customer_id}")
         except Exception as e:
             print(f"Error handling customer deleted event: {e}")

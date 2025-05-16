@@ -1,4 +1,3 @@
-# services/kafka_service.py
 from kafka import KafkaProducer, KafkaConsumer
 import json
 from config import KAFKA_BOOTSTRAP_SERVERS

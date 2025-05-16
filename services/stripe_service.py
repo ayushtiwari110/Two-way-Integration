@@ -22,7 +22,7 @@ class StripeService(CatalogIntegrationService):
             print(f"Error creating Stripe customer: {e}")
             return None
     
-    def update_item(self, stripe_id, name=None, email=None):
+    def update_item(self, integration_id, name, email):
         """Update a customer in Stripe"""
         try:
             update_params = {}
@@ -33,7 +33,7 @@ class StripeService(CatalogIntegrationService):
                 
             if update_params:
                 customer = stripe.Customer.modify(
-                    stripe_id,
+                    id=integration_id,
                     **update_params
                 )
                 return customer
@@ -42,15 +42,15 @@ class StripeService(CatalogIntegrationService):
             print(f"Error updating Stripe customer: {e}")
             return None
     
-    def delete_item(self, stripe_id):
+    def delete_item(self, integration_id):
         """Delete a customer in Stripe"""
         try:
-            return stripe.Customer.delete(stripe_id)
+            return stripe.Customer.delete(integration_id)
         except Exception as e:
             print(f"Error deleting Stripe customer: {e}")
             return None
     
-    def get_items(self, limit=100, starting_after=None):
+    def get_items(self, limit, starting_after):
         """Get customers from Stripe"""
         try:
             params = {"limit": limit}
@@ -60,4 +60,12 @@ class StripeService(CatalogIntegrationService):
             return stripe.Customer.list(**params)
         except Exception as e:
             print(f"Error fetching Stripe customers: {e}")
+            return None
+    
+    def get_item(self, integration_id):
+        """Get a specific customer from Stripe"""
+        try:
+            return stripe.Customer.retrieve(integration_id)
+        except Exception as e:
+            print(f"Error fetching Stripe customer: {e}")
             return None

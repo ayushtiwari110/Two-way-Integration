@@ -11,7 +11,7 @@ inward_topic = 'customer_inward_sync'
 stripe.api_key = STRIPE_API_KEY
 webhook_secret = STRIPE_WEBHOOK_SECRET
 
-@app.post("/webhooks/stripe")
+@app.post("/stripe")
 async def stripe_webhook(request: Request):
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
@@ -28,10 +28,10 @@ async def stripe_webhook(request: Request):
         return {"error": "Invalid signature"}
     
     # Handle the event
-    if event['type'] == 'customer.created' or event['type'] == 'customer.updated':
+    if event['type'] == 'customer.created' or event['type'] == 'customer.updated' or event['type'] == 'customer.deleted':
         customer = event['data']['object']
         message = {
-            'event_type': 'stripe_customer_updated',
+            'event_type': event['type'],
             'stripe_customer': {
                 'id': customer['id'],
                 'name': customer.get('name'),
