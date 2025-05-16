@@ -10,11 +10,16 @@
 A real-time two-way customer catalog integration system between your application and external services like Stripe.
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x400?text=Customer+Sync+Hub+Architecture" alt="Architecture Diagram"/>
+  <img src="https://github.com/user-attachments/assets/b6dee33c-be3e-45a5-8c74-66c9503e648a" alt="Architecture Diagram"/>
 </p>
 
-## 📑 Table of Contents
+## Demonstration Video
+[![Demonstration Video](https://github.com/user-attachments/assets/7bfb1a4a-4eb7-4d82-b0db-18e4b61cb806)](https://drive.google.com/file/d/1DcWkh20puYZ7bchw1cD6YFSOVaAZ5bSy/view?usp=sharing)
 
+<a href="https://drive.google.com/file/d/1DcWkh20puYZ7bchw1cD6YFSOVaAZ5bSy/view?usp=sharing"> Drive Link </a>
+
+## 📑 Table of Contents
+- Web Interface
 - Overview
 - Features
 - System Architecture
@@ -22,12 +27,50 @@ A real-time two-way customer catalog integration system between your application
 - Project Structure
 - Database Design
 - Event Flow
-- Screenshots
 - API Documentation
 - Installation & Setup
 - Extending the System
 - Future Improvements
 - License
+
+## 📸 Web Interface
+
+### Dashboard
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fb3bdde1-6124-40db-b676-944b8ba65c7e" alt="Dashboard"/>
+</p>
+
+The dashboard provides a comprehensive overview of your customer sync status with:
+- Key metrics (total customers, synced customers, pending sync)
+- Pie chart visualizing sync status distribution
+- Recent customer activity with sync status indicators
+- Quick action buttons for managing customers and viewing integrations
+
+### Customer Management
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/70d03a4b-0db4-4dba-89ad-43cdcb61b322" alt="Customer Management"/>
+</p>
+
+The customer management page allows you to:
+- View all customers in a clean, sortable table
+- See sync status for each customer at a glance
+- Add new customers with a simple modal form
+- Edit existing customer details
+- Delete customers with confirmation
+- Refresh the customer list to see latest sync status
+
+### Integrations View
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d15e0ab7-d388-494a-a0c9-41df87b34eb9" alt="Integrations"/>
+</p>
+
+The integrations page shows:
+- All integration records between local customers and external systems
+- Customer details for each integration
+- Integration type (e.g., Stripe)
+- External IDs for reference
+- Quick refresh functionality to see latest integration status
 
 ## 🌐 Overview
 
@@ -85,7 +128,7 @@ The system follows a modern, event-driven microservices architecture:
 7. **External Services**: Integration with Stripe and other services
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x500?text=System+Architecture+Diagram" alt="System Architecture"/>
+  <img src="https://github.com/user-attachments/assets/b6dee33c-be3e-45a5-8c74-66c9503e648a" alt="Architecture Diagram"/>
 </p>
 
 ## 💻 Tech Stack
@@ -147,29 +190,9 @@ customer-sync-hub/
 ## 🗃️ Database Design
 
 The system uses a polymorphic database design to support multiple catalog types:
-
-```
-┌────────────────┐       ┌─────────────────┐
-│  catalog_items │       │    customers    │
-├────────────────┤       ├─────────────────┤
-│ id (PK)        │◄──────┤ id (PK, FK)     │
-│ catalog_type   │       │ name            │
-│ created_at     │       │ email (unique)  │
-│ updated_at     │       └─────────────────┘
-└────────────────┘               ▲
-        ▲                        │
-        │                        │
-        │                        │
-        │       ┌─────────────────────────┐
-        └───────┤  catalog_integrations   │
-                ├─────────────────────────┤
-                │ id (PK)                 │
-                │ catalog_item_id (FK)    │
-                │ integration_type        │
-                │ integration_id          │
-                │ created_at              │
-                └─────────────────────────┘
-```
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a8d9d07b-ae25-415b-9ad2-12e031c2ab7d" alt="DB Design"/>
+</p>
 
 - **Polymorphic Inheritance**: `catalog_items` is the base table with `catalog_type` determining the entity type
 - **Integration Mapping**: `catalog_integrations` stores mappings between local entities and external IDs
@@ -195,44 +218,6 @@ The system uses a polymorphic database design to support multiple catalog types:
    - For `customer.created`: Creates new customer and integration record
    - For `customer.updated`: Updates existing customer details
    - For `customer.deleted`: Removes integration record (doesn't deletes customer, so the customer becomes unsynced with stripe)
-
-## 📸 Web Interface
-
-### Dashboard
-<p align="center">
-  <img src="https://via.placeholder.com/800x400?text=Dashboard+Screenshot" alt="Dashboard"/>
-</p>
-
-The dashboard provides a comprehensive overview of your customer sync status with:
-- Key metrics (total customers, synced customers, pending sync)
-- Pie chart visualizing sync status distribution
-- Recent customer activity with sync status indicators
-- Quick action buttons for managing customers and viewing integrations
-
-### Customer Management
-<p align="center">
-  <img src="https://via.placeholder.com/800x400?text=Customer+Management+Screenshot" alt="Customer Management"/>
-</p>
-
-The customer management page allows you to:
-- View all customers in a clean, sortable table
-- See sync status for each customer at a glance
-- Add new customers with a simple modal form
-- Edit existing customer details
-- Delete customers with confirmation
-- Refresh the customer list to see latest sync status
-
-### Integrations View
-<p align="center">
-  <img src="https://via.placeholder.com/800x400?text=Integrations+Screenshot" alt="Integrations"/>
-</p>
-
-The integrations page shows:
-- All integration records between local customers and external systems
-- Customer details for each integration
-- Integration type (e.g., Stripe)
-- External IDs for reference
-- Quick refresh functionality to see latest integration status
 
 ## 📚 API Documentation
 
