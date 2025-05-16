@@ -88,19 +88,36 @@ class StripeWorker:
     def _handle_customer_deleted(self, event):
         """Handle customer deleted event"""
         try:
-            customer_id = event.get('customer_id')
-            integration = self.customer_repo.get_integration(catalog_id=customer_id, integration_type='stripe')
+            # In the customer_api.py, we're sending the Stripe ID, not the local customer ID
+            stripe_id = event.get('customer_id')
             
-            print(f"Processing Stripe customer deletion for Stripe ID: {integration.integration_id}")
-
-            delete_from_stripe = self.stripe_service.delete_item(integration.integration_id)
-            if delete_from_stripe:
-                print(f"Successfully deleted Stripe customer: {integration.integration_id}")
-                # Delete the integration record using its own ID
-                self.customer_repo.delete_integration(integration.integration_id)
-                print(f"Successfully deleted local integration record (ID: {integration.id}) for Stripe ID: {integration.integration_id}")
+            if not stripe_id:
+                print("Error: Missing Stripe ID in customer deletion event")
+                return
+                
+            print(f"Processing deletion for Stripe customer ID: {stripe_id}")
+            
+            # First delete from Stripe using the Stripe ID directly
+            delete_result = self.stripe_service.delete_item(stripe_id)
+            
+            if delete_result:
+                print(f"Successfully deleted customer from Stripe: {stripe_id}")
+                
+                # Now find and delete the integration record by Stripe ID
+                integration = self.customer_repo.get_integration(
+                    integration_id=stripe_id,  # Use integration_id parameter instead of catalog_id
+                    integration_type='stripe'
+                )
+                
+                if integration:
+                    self.customer_repo.delete_integration(integration.id)
+                    print(f"Successfully deleted integration record (ID: {integration.id})")
+                else:
+                    print(f"No integration record found for Stripe ID: {stripe_id} (may have been cascade deleted)")
             else:
-                print(f"Failed to delete Stripe customer: {integration.integration_id}")
+                print(f"Failed to delete customer from Stripe: {stripe_id}")
                 
         except Exception as e:
-            print(f"Error handling customer deleted event: {e}")
+            import traceback
+            print(f"Error handling customer deletion event: {e}")
+            print(traceback.format_exc())
