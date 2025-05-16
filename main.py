@@ -13,9 +13,27 @@ from services.stripe_service import StripeService
 from services.kafka_service import KafkaService
 import uvicorn
 import signal
+import logging
 import sys
 from contextlib import asynccontextmanager
 
+def setup_logging():
+    # Configure root logger
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout)  # Send logs to stdout
+        ]
+    )
+    # Set Uvicorn access log level to INFO
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    
+    # Return root logger
+    return logging.getLogger(__name__)
+
+# Call setup_logging at the beginning of the file
+logger = setup_logging()
 
 # Workers
 stripe_worker = StripeWorker()
@@ -75,4 +93,4 @@ async def integrations_page(request: Request):
     return templates.TemplateResponse("integrations.html", {"request": request})
     
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

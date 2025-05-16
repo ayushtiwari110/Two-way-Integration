@@ -7,7 +7,7 @@ from services.outward_sync_service import OutwardSyncService
 from database.models import Session as DBSession
 from services.kafka_service import KafkaService
 import logging
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -85,52 +85,25 @@ def update_customer(
         email=updated.email
     )
 
-@router.delete("/customers/{customer_id}")
+@router.delete("/customers/{customer_id}", response_model=dict)
 def delete_customer(
     customer_id: int,
     repo: CustomerRepository = Depends(get_customer_repo),
     sync_service: OutwardSyncService = Depends(get_outward_sync_service)
 ):
-    try:
-        customer = repo.get(customer_id)
-        if not customer:
-            raise HTTPException(status_code=404, detail="Customer not found")
-        
-        # Get integration BEFORE deleting the customer
-        integration = repo.get_integration(catalog_id=customer_id, integration_type='stripe')
-        stripe_id = integration.integration_id if integration else None
-        
-        print(f"Integration found: {integration is not None}, Stripe ID: {stripe_id}")
-        
-        # Now delete the customer
-        try:
-            deleted = repo.delete(customer_id)
-            print(f"Delete operation result: {deleted}")
-        except Exception as e:
-            import traceback
-            print(f"ERROR in repo.delete: {e}")
-            print(traceback.format_exc())
-            raise HTTPException(status_code=500, detail=f"Error deleting customer: {str(e)}")
-        
-        print(f"Deleted: {deleted}, Have Stripe ID: {stripe_id is not None}")
-        
-        # If deleted successfully and we have a Stripe ID, queue deletion
-        if deleted and stripe_id:
-            try:
-                print(f"About to queue delete event for Stripe ID: {stripe_id}")
-                sync_service.queue_delete_event(stripe_id)  # Use Stripe ID instead of customer_id
-                print(f"Queued deletion of Stripe customer: {stripe_id}")
-            except Exception as e:
-                print(f"Error queueing delete event: {e}")
-                
-        return {"success": deleted}
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        print(f"Unhandled exception in delete_customer: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail="Internal server error")
+    logger.info(f"DELETE request received for customer_id: {customer_id}")
+    customer = repo.get(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    integration = repo.get_integration(catalog_id=customer_id, integration_type='stripe')
+    deleted = repo.delete(customer_id)
+    
+    # Queue the delete event for external sync
+    if deleted and integration:
+        sync_service.queue_delete_event(integration.integration_id)
+    
+    return {"success": deleted}
 
 @router.get("/customers", response_model=List[CustomerResponse])
 def get_customers(repo: CustomerRepository = Depends(get_customer_repo)):
