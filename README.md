@@ -10,7 +10,7 @@
 A real-time two-way customer catalog integration system between your application and external services like Stripe.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/b6dee33c-be3e-45a5-8c74-66c9503e648a" alt="Architecture Diagram"/>
+  <img src="https://github.com/user-attachments/assets/0733ffed-5e97-4e36-899d-30980dabf8bc" alt="Architecture Diagram"/>
 </p>
 
 ## Demonstration Video
